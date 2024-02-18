@@ -1,31 +1,27 @@
 import { useEffect, useState } from "react";
 
-// Step 4
 function App() {
-  // Step 1
   const [expenses, setExpenses] = useState([]);
+  const [description, setDescription] = useState("");
+  const [amount, setAmount] = useState(0);
+  const [date, setDate] = useState(new Date(Date.now()).toLocaleDateString("en-CA"));
+  const [onSuccessfulSave,setOnSuccessfulSave] = useState(false);
 
-  // Step 2
-  const fetchExpenses = async () => {
-    const apiUrl = "https://yawayawa.onrender.com";
+  const apiUrl = "https://yawayawa.onrender.com";
+  const endpoint = `${apiUrl}/api/expenses`;
 
-    const endpoint = `${apiUrl}/api/expenses`;
-
-    const response = await fetch(endpoint);
-
-    const expenseData = await response.json();
-
-    setExpenses(expenseData);
-  };
-
-  // Step 3
   useEffect(() => {
+    async function fetchExpenses() {
+      const response = await fetch(endpoint);
+      const expenseData = await response.json();
+      setExpenses(expenseData);
+    }
+
     fetchExpenses();
   }, []);
 
-  
   function renderExpenses(expenses) {
-    const rows = expenses.map((expense) => (
+    return expenses.map(expense => (
       <tr key={expense._id}>
         <td>{expense._id}</td>
         <td>{expense.description}</td>
@@ -33,16 +29,34 @@ function App() {
         <td>{new Date(expense.date).toDateString()}</td>
       </tr>
     ));
+  }
 
-    return rows;
+  async function saveExpense(event) {
+    event.preventDefault();
+
+    const expense = {
+      description: description,
+      amount: amount,
+      date: date,
+    };
+
+    await fetch(endpoint, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(expense),
+    });
+
+    setOnSuccessfulSave(true);
   }
 
   return (
     <div>
-      <form>
-        <textarea cols="30" rows="10"></textarea>
-        <input type="number" />
-        <input type="date" />
+      <form onSubmit={saveExpense}>
+        <textarea cols="30" rows="10" value={description} onChange={e => setDescription(e.target.value)} />
+        <input type="number" value={amount} onChange={e => setAmount(e.target.value)} />
+        <input type="date" value={date} onChange={e => setDate(e.target.value)} />
         <button>Save</button>
       </form>
 
@@ -59,7 +73,6 @@ function App() {
         </thead>
 
         <tbody>
-          {/* Rendering expenses */}
           {renderExpenses(expenses)}
         </tbody>
       </table>
